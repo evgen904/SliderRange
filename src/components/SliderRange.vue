@@ -41,12 +41,12 @@
       <div class="line line-start" ref="lineStart"></div>
       <div class="line line-end" ref="lineEnd"></div>
       <div class="slider">
-        <input class="min" v-model="min" type="range" max="14" />
-        <input class="max" v-model="max" type="range" max="14" />
+        <input ref="min" class="min" v-model="min" type="range" max="14" />
+        <input ref="max" class="max" v-model="max" type="range" max="14" />
       </div>
     </div>
     <div class="slider-range--text">
-      123123 123sdfsdf
+      {{ textRange }}
     </div>
   </div>
 </template>
@@ -97,13 +97,37 @@ export default {
           this.$refs.red.children[i].classList.remove('disabled');
         }
       }
+
+      if (this.min == 0 && this.max == this.maxRange) {
+        this.textRange = 'любая цена';
+      }
+      else {
+        if (this.min != 0 && this.max == this.maxRange) {
+          this.textRange = `oт ${this.ranges[this.min]} ₽`;
+        }
+        else if (this.min) {
+
+        }
+      }
+
+
+
     },
     setPriceRange(price) {
       let rangeMin = this.ranges.findIndex(item => item == price[0]);
       let rangeMax = this.ranges.findIndex(item => item == price[1]);
 
-      this.min = rangeMin;
-      this.max = rangeMax;
+      if (price[0] !== undefined) {
+        this.min = rangeMin;
+      }
+      if (price[1] !== undefined) {
+        this.max = rangeMax;
+      }
+
+
+
+
+
     }
   },
   watch: {
@@ -121,7 +145,8 @@ export default {
       procentMin: 0,
       procentMax: 100,
       maxRange: 14,
-      price: [500,6000]
+      price: [,],
+      textRange: ''
     }
   }
 }
