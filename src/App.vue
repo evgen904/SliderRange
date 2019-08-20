@@ -2,7 +2,8 @@
   <div id="app">
     <SliderRange
       :facet="facet"
-      :ranges="priceRub"
+      :price="priceRub"
+      :maxRange="15"
     />
   </div>
 </template>

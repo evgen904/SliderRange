@@ -37,36 +37,102 @@
       </svg>
     </div>
     <div class="slider-range--base">
-      <div class="line line-cen"></div>
-      <div class="line line-start" ref="lineStart"></div>
-      <div class="line line-end" ref="lineEnd"></div>
+      <div ref="line" class="line"></div>
       <div class="slider">
-        <input ref="min" class="min" v-model="min" type="range" max="14" />
-        <input ref="max" class="max" v-model="max" type="range" max="14" />
+        <input class="min" @input="changeRange('min')" v-model="rangeSlider[0]" type="range" :max="maxRange" />
+        <input class="max" @input="changeRange('max')" v-model="rangeSlider[1]" type="range" :max="maxRange" />
       </div>
     </div>
-    <div class="slider-range--text">
-      {{ textRange }}
+    <br><br>
+    <div>
+      <span>
+        любая цена
+      </span>
+      <span>
+        <input @input="changePrice('min')" type="text" v-model="rangePrice[0]">
+      </span>
+      <span>
+        <input @input="changePrice('max')" type="text" v-model="rangePrice[1]">
+      </span>
     </div>
   </div>
 </template>
 
 <script>
+
+// ближайшее число из массива
+function nearPrice(arrayRange, elem) {
+  return arrayRange.reduce(function(prev, curr) {
+    return (Math.abs(curr - elem) < Math.abs(prev - elem) ? curr : prev);
+  });
+};
+
+import _ from 'lodash'
+
 export default {
   name: "SliderRange",
   props: {
     facet: {
       type: Array
     },
-    ranges: {
+    price: {
       type: Array
+    },
+    maxRange: {
+      type: Number,
+      default: 15
+    },
+    range: {
+      type: Array,
+      default: () => [0,15]
     }
+  },
+  created() {
+    this.rangeSlider = this.range;
   },
   mounted() {
     this.schedule(this.facet);
-    this.setPriceRange(this.price);
   },
   methods: {
+
+    changeRange(val) {
+      if (val == "min") {
+        if (parseInt(this.rangeSlider[0]) >= parseInt(this.rangeSlider[1])) {
+          this.rangeSlider[0] = parseInt(this.rangeSlider[1])-1;
+        }
+      }
+      if (val == "max") {
+        if (parseInt(this.rangeSlider[1]) <= parseInt(this.rangeSlider[0])) {
+          this.rangeSlider[1] = parseInt(this.rangeSlider[0])+1;
+        }
+      }
+      this.rangePrice = [
+        this.price[this.rangeSlider[0]],
+        this.price[this.rangeSlider[1]]
+      ];
+    },
+
+    changePrice: _.debounce( function (val) {
+      if (val == "max") {
+        if (parseInt(this.rangePrice[1]) < parseInt(this.rangePrice[0])) {
+          this.rangePrice[1] = this.rangePrice[0];
+        }
+      }
+      if (val == "min") {
+        if (parseInt(this.rangePrice[0]) > parseInt(this.rangePrice[1])) {
+          this.rangePrice[0] = this.rangePrice[1];
+        }
+      }
+
+      let minRange = nearPrice(this.price,this.rangePrice[0]);
+      let maxRange = nearPrice(this.price,this.rangePrice[1]);
+      let minIndex = this.price.findIndex(item => item == minRange);
+      let maxIndex = this.price.findIndex(item => item == maxRange);
+
+      this.rangeSlider = [minIndex,maxIndex];
+    },1000),
+
+
     schedule(array) {
       const min = Math.min(...array)
       const max = Math.max(...array)
@@ -80,14 +146,16 @@ export default {
       },2000)
     },
     priceRange(min, max) {
-      this.procentMin = (this.min/this.maxRange)*100;
-      this.procentMax = (this.max/this.maxRange)*100;
+      this.procentMin = (this.rangeSlider[0]/this.maxRange)*100;
+      this.procentMax = (this.rangeSlider[1]/this.maxRange)*100;
 
-      this.$refs.lineStart.style.background = 'linear-gradient(to right, #d8d8d8 0%, #d8d8d8 '+this.procentMin +'%, rgba(255,255,255,0) ' + this.procentMin + '%, rgba(255,255,255,0) 100%)';
-      this.$refs.lineEnd.style.background = 'linear-gradient(to left, #d8d8d8 0%, #d8d8d8 '+(100-this.procentMax)+'%, rgba(255,255,255,0) ' + (100-this.procentMax) + '%, rgba(255,255,255,0) 100%)'
+      this.$refs.line.style.background = `linear-gradient(to right,
+        #d8d8d8 ${this.procentMin}%,
+        #f51449 ${this.procentMin}%, #f51449 ${this.procentMax}%,
+        #d8d8d8 ${this.procentMax}%)`;
 
-      let minRange = Math.floor(14 * (this.procentMin/100));
-      let maxRange = Math.floor(14 - (14 * (1 - (this.procentMax/100))));
+      let minRange = Math.floor(this.maxRange * (this.procentMin/100));
+      let maxRange = Math.floor(this.maxRange - (this.maxRange * (1 - (this.procentMax/100))));
 
       for (var i = 0; i < this.$refs.red.children.length; i++) {
         if (minRange >= i || i >= maxRange) {
@@ -98,63 +166,42 @@ export default {
         }
       }
 
-      if (this.min == 0 && this.max == this.maxRange) {
-        this.textRange = 'любая цена';
-      }
-      else {
-        if (this.min != 0 && this.max == this.maxRange) {
-          this.textRange = `oт ${this.ranges[this.min]} ₽`;
-        }
-        else if (this.min) {
-
-        }
-      }
-
-
-
-    },
-    setPriceRange(price) {
-      let rangeMin = this.ranges.findIndex(item => item == price[0]);
-      let rangeMax = this.ranges.findIndex(item => item == price[1]);
-
-      if (price[0] !== undefined) {
-        this.min = rangeMin;
-      }
-      if (price[1] !== undefined) {
-        this.max = rangeMax;
-      }
-
-
-
-
-
     }
   },
   watch: {
-    min: function (val) {
-      this.priceRange(val, this.max);
-    },
-    max: function (val) {
-      this.priceRange(this.min, val);
+    rangeSlider: function (val) {
+      this.priceRange(val[0],val[1]);
     }
   },
   data() {
     return {
-      min: 0,
-      max: 14,
       procentMin: 0,
       procentMax: 100,
-      maxRange: 14,
-      price: [,],
-      textRange: ''
+      rangeSlider: [null, null],
+      rangePrice: [null, null],
     }
   }
 }
 </script>
 
 <style lang="scss" scoped>
+
+
+
+
+.gradient {
+  width: 1000px;
+  height: 200px;
+  background: linear-gradient(to right,
+    #d8d8d8 40%,
+    #f51449 40%, #f51449 90%,
+    #d8d8d8 90%)
+}
+
 .slider-range {
   width: 230px;
+  margin: 0 auto;
+  padding-top: 100px;
   &--schedule {
     margin-bottom: -5px;
     svg {
@@ -179,9 +226,7 @@ export default {
       top: 1px;
       left: 0;
       width: 100%;
-      &.line-cen {
-        background: #f51449;
-      }
+      background: #f51449;
     }
     .slider {
       position: relative;
