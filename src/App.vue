@@ -15,13 +15,13 @@
       <button @click="openPopup(2)">2</button>
       <button @click="openPopup(3)">3</button>
 
-      <div v-if="activeMod[0] == 1">
+      <div v-if="activeMod == 1">
         1 Lorem ipsum dolor sit amet, consectetur adipisicing elit. Ipsam, provident.
       </div>
-      <div v-if="activeMod[0] == 2">
+      <div v-if="activeMod == 2">
         2 Lorem ipsum dolor sit amet, consectetur adipisicing elit. Ipsam, provident.
       </div>
-      <div v-if="activeMod[0] == 3">
+      <div v-if="activeMod == 3">
         3 Lorem ipsum dolor sit amet, consectetur adipisicing elit. Ipsam, provident.
       </div>
 
@@ -69,20 +69,21 @@
     },
     methods: {
       openPopup(val) {
-
-        this.activeMod = [val,0];
-
-        console.log(typeof this.activeMod[0]);
-
-
+        this.key = this.activeMod;
+        this.activeMod = val;
+        if (this.key == this.activeMod) {
+          this.activeMod = 0;
+        }
       }
     },
     data() {
       return {
+        key: 0,
         mod1: 1,
         mod2: 2,
         mod3: 3,
-        activeMod: [0,0],
+        key: 0,
+        activeMod: 0,
         facet: [700,2400,300,1200,500,700,900,800,400,900,600,1100,1200,1400],
         priceRub: [0,500, 1000, 1500, 2000, 2500, 3000, 4000, 5000, 6000, 7000, 8000, 10000, 15000, 20000]
       }

@@ -59,10 +59,121 @@
         <input @input="changePrice('max')" type="text" v-model="rangePrice[1]">
       </span>
     </div>
+
+    <br><br>
+    <div class="new-slider js-slider">
+      <button class="min js-min"></button>
+      <button class="max js-max"></button>
+      <br><br>
+      <div>
+        <input type="text" class="js-min-text">
+        <input type="text" class="js-max-text">
+      </div>
+    </div>
+
+
   </div>
 </template>
 
 <script>
+/*
+
+  var price = [0,500, 1000, 1500, 2000, 2500, 3000, 4000, 5000, 6000, 7000, 8000, 10000, 15000, 20000];
+
+  var sliderWr = document.querySelector('.js-slider');
+  var btnMin = document.querySelector('.js-min');
+  var btnMax = document.querySelector('.js-max');
+  var textMin = document.querySelector('.js-min-text');
+  var textMax = document.querySelector('.js-max-text');
+  var minIndex = 0;
+  var maxIndex = 15;
+  var stepSlider = 15;
+
+
+  btnMin.onmousedown = function(evt) {
+    var buttonCoords = getCoords(btnMin);
+    var shiftX = evt.pageX - buttonCoords.left;
+    var sliderCoords = getCoords(sliderWr);
+    var stepSliderWidth = Math.floor(sliderWr.offsetWidth / stepSlider);
+
+    document.onmousemove = function(evt) {
+      var left = evt.pageX - shiftX - sliderCoords.left;
+
+      left = Math.round(left / stepSliderWidth) * stepSliderWidth;
+      if (left < 0) {
+        left = 0;
+      }
+      var right = sliderWr.offsetWidth - btnMin.offsetWidth;
+
+      if (left > right) {
+        left = right;
+      }
+      minIndex = stepSlider - Math.floor((sliderWr.offsetWidth - left) / stepSliderWidth);
+
+
+      console.log(minIndex);
+
+
+      if (minIndex >= maxIndex) {
+        minIndex = maxIndex-1;
+      } else {
+        btnMin.style.left = left + 'px';
+      }
+
+
+
+
+      textMin.value = price[minIndex];
+
+    }
+
+    document.onmouseup = function() {
+      document.onmousemove = document.onmouseup = null;
+      console.log('Drag eneded');
+    };
+
+    return false;
+  };
+
+  btnMax.onmousedown = function(evt) {
+    var buttonCoords = getCoords(btnMax);
+    var shiftX = evt.pageX - buttonCoords.left;
+    var sliderCoords = getCoords(sliderWr);
+    var stepSliderWidth = Math.floor(sliderWr.offsetWidth / stepSlider);
+
+    document.onmousemove = function(evt) {
+      var left = evt.pageX - shiftX - sliderCoords.left;
+
+      left = Math.round(left / stepSliderWidth) * stepSliderWidth;
+      if (left < 0) {
+        left = 0;
+      }
+      var right = sliderWr.offsetWidth - btnMax.offsetWidth;
+
+      if (left > right) {
+        left = right;
+      }
+      maxIndex = stepSlider - Math.floor((sliderWr.offsetWidth - left) / stepSliderWidth);
+
+      if (maxIndex <= minIndex) {
+        maxIndex = minIndex+1;
+      } else {
+        btnMax.style.left = left + 'px';
+      }
+
+      textMax.value = (price[maxIndex] !== undefined) ? price[maxIndex] : '';
+
+    }
+
+    document.onmouseup = function() {
+      document.onmousemove = document.onmouseup = null;
+      console.log('Drag eneded');
+    };
+
+    return false;
+  };
+
+  */
 
 // ближайшее число из массива
 function nearPrice(arrayRange, elem) {
@@ -361,6 +472,34 @@ export default {
     padding: 18px 0 0;
   }
 }
+
+
+.new-slider {
+  height: 2px;
+  background: #c00;
+  position: relative;
+  button {
+    cursor: pointer;
+    width: 20px;
+    height: 20px;
+    border-radius: 30px;
+    position: absolute;
+    top: -10px;
+    left: 0;
+    background: #fff;
+    border: 2px solid #c00;
+    outline-style: none;
+    padding: 0;
+    margin: 0;
+    &.min {
+      left: 0;
+    }
+    &.max {
+      left: 100%;
+    }
+  }
+}
+
 </style>
 
 
