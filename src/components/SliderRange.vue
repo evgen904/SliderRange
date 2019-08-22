@@ -39,8 +39,12 @@
     <div class="slider-range--base">
       <div ref="line" class="line"></div>
       <div class="slider">
-        <input class="min" @input="changeRange('min')" v-model="rangeSlider[0]" type="range" :max="maxRange" />
-        <input class="max" @input="changeRange('max')" v-model="rangeSlider[1]" type="range" :max="maxRange" />
+        <div ref="minRange" class="slider-one">
+          <input class="min" @input="changeRange('min')" v-model="rangeSlider[0]" type="range" :max="maxRange" />
+        </div>
+        <div class="slider-two">
+          <input class="max" @input="changeRange('max')" v-model="rangeSlider[1]" type="range" :max="maxRange" />
+        </div>
       </div>
     </div>
     <br><br>
@@ -149,6 +153,10 @@ export default {
       this.procentMin = (this.rangeSlider[0]/this.maxRange)*100;
       this.procentMax = (this.rangeSlider[1]/this.maxRange)*100;
 
+      this.$refs.minRange.style.width = `calc(${this.procentMax}% - 20px)`;
+
+      console.log(this.procentMax);
+
       this.$refs.line.style.background = `linear-gradient(to right,
         #d8d8d8 ${this.procentMin}%,
         #f51449 ${this.procentMin}%, #f51449 ${this.procentMax}%,
@@ -198,6 +206,8 @@ export default {
     #d8d8d8 90%)
 }
 
+
+
 .slider-range {
   width: 230px;
   margin: 0 auto;
@@ -232,65 +242,117 @@ export default {
       position: relative;
       width: 100%;
 
-      input[type='range'] {
-        width: 100%;
-        outline-style: none;
+
+      &-one {
         position: absolute;
-        left: 0;
-        right: 0;
+        top: 0;
+        z-index: 10;
+        min-width: 24px;
+      }
+      &-two {
+        position: absolute;
+        top: 0;
+        width: 100%;
+        z-index: 5;
+      }
+
+
+
+      input[type=range] {
+        -webkit-appearance: none;
         margin: 0;
         padding: 0;
         outline-style: none;
-      }
-      input[type='range']:nth-child(1)::-webkit-slider-thumb{
-        z-index: 2;
-      }
-      input[type='range']::-webkit-slider-runnable-track {
-        height: 4px;
-        -webkit-appearance: none;
-        color: #13bba4;
-        margin-top: -1px;
+        width: 100%;
       }
 
-      input[type='range']::-webkit-slider-thumb {
-        width: 20px;
-        -webkit-appearance: none;
+      input[type=range]:focus {
+        outline: none;
+      }
+      input[type=range]::-webkit-slider-runnable-track {
+        width: 100%;
         height: 20px;
-        background: #fff;
+        cursor: pointer;
+        animate: 0.2s;
+        background: transparent;
+        border: none;
+      }
+      input[type=range]::-webkit-slider-thumb {
         border: 2px solid #f51449;
-        position: relative;
-        z-index: 1;
-        margin-top: -7px;
+        height: 20px;
+        width: 20px;
+        z-index: 20;
         border-radius: 30px;
-      }
-
-
-      input[type='range'].min::-webkit-slider-thumb {
-        //box-shadow: -2000px 0 0 2000px #c00;
         background: #fff;
-      }
-      input[type='range'].max::-webkit-slider-thumb {
-        //box-shadow: -2000px 0 0 2000px #43e5f7;
-        background: #fff;
-      }
-
-
-      input[type='range'] {
+        cursor: pointer;
         -webkit-appearance: none;
-        background-color: rgba(255,255,255,0);
+        margin-top: 0;
       }
-      input[type="range"]::-moz-range-progress {
-        background-color: rgba(255,255,255,0);
+      input[type=range]:focus::-webkit-slider-runnable-track {
+        background: transparent;
       }
-      input[type="range"]::-moz-range-track {
-        background-color: rgba(255,255,255,0);
+      input[type=range]::-moz-range-track {
+        width: 100%;
+        height: 20px;
+        cursor: pointer;
+        animate: 0.2s;
+        background: transparent;
+        border: none;
       }
-      input[type="range"]::-ms-fill-lower {
-        background-color: rgba(255,255,255,0);
+      input[type=range]::-moz-range-thumb {
+        border: 2px solid #f51449;
+        height: 20px;
+        width: 20px;
+        z-index: 20;
+        border-radius: 30px;
+        background: #fff;
+        cursor: pointer;
       }
-      input[type="range"]::-ms-fill-upper {
-        background-color: rgba(255,255,255,0);
+      input[type=range]::-ms-track {
+        width: 100%;
+        height: 20px;
+        cursor: pointer;
+        animate: 0.2s;
+        background: transparent;
+        border-color: transparent;
+        border-width: 0;
+        color: transparent;
       }
+      input[type=range]::-ms-fill-lower {
+        background: transparent;
+        border: none;
+        border-radius: 50px;
+      }
+      input[type=range]::-ms-fill-upper {
+        background: #000;
+        border: none;
+        border-radius: 50px;
+      }
+      input[type=range]::-ms-thumb {
+        border: 2px solid #f51449;
+        height: 20px;
+        width: 20px;
+        z-index: 20;
+        border-radius: 30px;
+        background: #fff;
+        cursor: pointer;
+        margin: 0;
+      }
+      input[type=range]:focus::-ms-fill-lower {
+        background: transparent;
+      }
+      input[type=range]:focus::-ms-fill-upper {
+        background: transparent;
+      }
+
+
+
+
+
+
+
+
+
     }
   }
   &--text {
@@ -300,3 +362,5 @@ export default {
   }
 }
 </style>
+
+
