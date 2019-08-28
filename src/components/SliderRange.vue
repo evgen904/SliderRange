@@ -76,6 +76,164 @@
 </template>
 
 <script>
+
+
+document.addEventListener("DOMContentLoaded", function(event) {
+  var price = [0,500, 1000, 1500, 2000, 2500, 3000, 4000, 5000, 6000, 7000, 8000, 10000, 15000, 20000];
+
+  var sliderWr = document.querySelector('.js-slider');
+  var btnMin = document.querySelector('.js-min');
+  var btnMax = document.querySelector('.js-max');
+  var textMin = document.querySelector('.js-min-text');
+  var textMax = document.querySelector('.js-max-text');
+  var minIndex = 0;
+  var maxIndex = 15;
+  var stepSlider = 15;
+
+
+  btnMin.onmousedown = function(evt) {
+    var buttonCoords = getCoords(btnMin);
+    var shiftX = evt.pageX - buttonCoords.left;
+    var sliderCoords = getCoords(sliderWr);
+    var stepSliderWidth = Math.floor(sliderWr.offsetWidth / stepSlider);
+
+    document.onmousemove = function(evt) {
+      var left = evt.pageX - shiftX - sliderCoords.left;
+
+      left = Math.round(left / stepSliderWidth) * stepSliderWidth;
+      if (left < 0) {
+        left = 0;
+      }
+      var right = sliderWr.offsetWidth - btnMin.offsetWidth;
+
+      if (left > right) {
+        left = right;
+      }
+      minIndex = stepSlider - Math.floor((sliderWr.offsetWidth - left) / stepSliderWidth);
+
+
+      console.log(minIndex);
+
+
+      if (minIndex >= maxIndex) {
+        minIndex = maxIndex-1;
+      } else {
+        btnMin.style.left = left + 'px';
+      }
+
+
+
+
+      textMin.value = price[minIndex];
+
+    }
+
+    document.onmouseup = function() {
+      document.onmousemove = document.onmouseup = null;
+      console.log('Drag eneded');
+    };
+
+    return false;
+  };
+
+  btnMax.onmousedown = function(evt) {
+    var buttonCoords = getCoords(btnMax);
+    var shiftX = evt.pageX - buttonCoords.left;
+    var sliderCoords = getCoords(sliderWr);
+    var stepSliderWidth = Math.floor(sliderWr.offsetWidth / stepSlider);
+
+    document.onmousemove = function(evt) {
+      var left = evt.pageX - shiftX - sliderCoords.left;
+
+      left = Math.round(left / stepSliderWidth) * stepSliderWidth;
+      if (left < 0) {
+        left = 0;
+      }
+      var right = sliderWr.offsetWidth - btnMax.offsetWidth;
+
+      if (left > right) {
+        left = right;
+      }
+      maxIndex = stepSlider - Math.floor((sliderWr.offsetWidth - left) / stepSliderWidth);
+
+      if (maxIndex <= minIndex) {
+        maxIndex = minIndex+1;
+      } else {
+        btnMax.style.left = left + 'px';
+      }
+
+      textMax.value = (price[maxIndex] !== undefined) ? price[maxIndex] : '';
+
+    }
+
+    document.onmouseup = function() {
+      document.onmousemove = document.onmouseup = null;
+      console.log('Drag eneded');
+    };
+
+    return false;
+  };
+
+
+  // Disable hthml5 drag and drop
+  /*button.ondragstart = function() {
+    return false;
+  };*/
+
+  function getCoords(elem) {
+    var box = elem.getBoundingClientRect();
+
+    return {
+      top: box.top + pageYOffset,
+      left: box.left + pageXOffset
+    };
+  }
+
+
+});
+
+
+
+
+
+/*
+var slider = document.querySelector('.range');
+var button = document.querySelector('.range__button');
+
+button.onmousedown = function(evt) {
+  var buttonCoords = getCoords(button);
+  var shiftX = evt.pageX - buttonCoords.left;
+  var sliderCoords = getCoords(slider);
+  console.log('Drag started');
+
+  document.onmousemove = function(evt) {
+    var left = evt.pageX - shiftX - sliderCoords.left;
+
+    if (left < 0) {
+      left = 0;
+    }
+    var right = slider.offsetWidth - button.offsetWidth;
+
+    if (left > right) {
+      left = right;
+    }
+
+    button.style.left = left + 'px';
+  }
+
+  document.onmouseup = function() {
+    document.onmousemove = document.onmouseup = null;
+    console.log('Drag eneded');
+  };
+
+  return false;
+};
+*/
+
+
+
+
+
 /*
 
   var price = [0,500, 1000, 1500, 2000, 2500, 3000, 4000, 5000, 6000, 7000, 8000, 10000, 15000, 20000];
