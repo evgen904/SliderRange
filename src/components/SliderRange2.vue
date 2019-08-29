@@ -11,37 +11,6 @@
       <button class="min" ref="btnMin"></button>
       <button class="max" ref="btnMax"></button>
     </div>
-
-
-    <br><br><br><br>
-
-
-    <div class="slider-range--range">
-      <input
-        class="min"
-        @change="emitPrice"
-        @input="changeRange('min')"
-        v-model="rangeSlider[0]"
-        type="range"
-        :max="maxRange"
-      />
-      <input
-        class="max"
-        @change="emitPrice"
-        @input="changeRange('max')"
-        v-model="rangeSlider[1]"
-        type="range"
-        :max="maxRange"
-      />
-    </div>
-
-
-    <br><br><br><br><br><br><br><br>
-
-
-
-
-
     <div class="slider-range--text">
       <template v-if="viewPort != 'mobile'">
         <span
@@ -60,7 +29,7 @@
       >
         oт
         <input
-          type="number"
+          type="text"
           v-model.number="rangePrice[0]"
           :disabled="viewPort != 'mobile'"
           @input="changePrice('min')"
@@ -77,7 +46,7 @@
       >
         до
         <input
-          type="number"
+          type="text"
           v-model.number="rangePrice[1]"
           :disabled="viewPort != 'mobile'"
           @input="changePrice('max')"
@@ -146,7 +115,7 @@
       let btnDragMax = false;
 
       function getCoords(elem) {
-        var box = elem.getBoundingClientRect();
+        let box = elem.getBoundingClientRect();
         return {
           top: box.top + pageYOffset,
           left: box.left + pageXOffset
@@ -155,10 +124,10 @@
 
       // нажатие на кнопку слайдера
       function downRange(event, btn, slider, type) {
-        var buttonCoords = getCoords(btn);
-        var shiftX = event.pageX - buttonCoords.left;
-        var sliderCoords = getCoords(slider);
-        var stepSliderWidth = Math.floor(slider.offsetWidth / thisEl.maxRange);
+        let buttonCoords = getCoords(btn);
+        let shiftX = event.pageX - buttonCoords.left;
+        let sliderCoords = getCoords(slider);
+        let stepSliderWidth = Math.floor(slider.offsetWidth / thisEl.maxRange);
         if (type=="min") {
           btnDragMin = true;
         }
@@ -175,12 +144,12 @@
       // движение кнопки слайдера для минимального значения
       function moveRange(event, btn, slider, sliderCoords, stepSliderWidth, shiftX) {
         if (btnDragMin) {
-          var left = event.pageX - shiftX - sliderCoords.left;
+          let left = event.pageX - shiftX - sliderCoords.left;
           left = Math.round(left / stepSliderWidth) * stepSliderWidth;
           if (left < 0) {
             left = 0;
           }
-          var right = slider.offsetWidth - btn.offsetWidth;
+          let right = slider.offsetWidth - btn.offsetWidth;
           if (left > right) {
             left = right;
           }
@@ -189,7 +158,7 @@
             thisEl.rangeMin = thisEl.rangeMax - 1;
           } else {
             btn.style.left = left + 'px';
-            //textMin.value = price[thisEl.rangeMin];
+            thisEl.priceInput();
           }
         }
       };
@@ -197,12 +166,12 @@
       // движение кнопки слайдера для максимального значения
       function moveRange2(event, btn, slider, sliderCoords, stepSliderWidth, shiftX) {
         if (btnDragMax) {
-          var left = event.pageX - shiftX - sliderCoords.left;
+          let left = event.pageX - shiftX - sliderCoords.left;
           left = Math.round(left / stepSliderWidth) * stepSliderWidth;
           if (left < 0) {
             left = 0;
           }
-          var right = slider.offsetWidth - btn.offsetWidth;
+          let right = slider.offsetWidth - btn.offsetWidth;
           if (left > right) {
             left = right;
           }
@@ -211,7 +180,7 @@
             thisEl.rangeMax = thisEl.rangeMin + 1;
           } else {
             btnMax.style.left = left + 'px';
-            //textMax.value = (price[thisEl.rangeMax] !== undefined) ? price[thisEl.rangeMax] : '';
+            thisEl.priceInput();
           }
         }
       };
@@ -264,10 +233,14 @@
 
 
 
-
-      this.priceRange();
     },
     methods: {
+      priceInput() {
+        this.rangePrice = [
+          this.price[this.rangeMin],
+          this.price[this.rangeMax]
+        ];
+      },
       isNumber: function(evt) {
         evt = evt ? evt : window.event;
         let charCode = evt.which ? evt.which : evt.keyCode;
@@ -287,33 +260,29 @@
           this.rangePrice[1] !== undefined ? this.rangePrice[1] : ""
         ]);
       },
-      changeRange(val) {
-        if (val == "min") {
-          if (parseInt(this.rangeSlider[0]) >= parseInt(this.rangeSlider[1])) {
-            this.rangeSlider[0] = parseInt(this.rangeSlider[1]) - 1;
-          }
-        }
-        if (val == "max") {
-          if (parseInt(this.rangeSlider[1]) <= parseInt(this.rangeSlider[0])) {
-            this.rangeSlider[1] = parseInt(this.rangeSlider[0]) + 1;
-          }
-        }
-        this.rangePrice = [
-          this.price[this.rangeSlider[0]],
-          this.price[this.rangeSlider[1]]
-        ];
+      initRange(min, max) {
+        let minRange = (min < max) ? min : max;
+        let maxRange = (max==this.maxRange) ? max-1 : (max < min) ? min : max;
+
+        let stepSliderWidth = Math.floor(this.$refs.sliderRange.offsetWidth/this.maxRange);
+        let btnMinLeft = stepSliderWidth*minRange;
+        this.$refs.btnMin.style.left = btnMinLeft+'px';
+
+        let btnMaxLeft = stepSliderWidth*maxRange;
+        this.$refs.btnMax.style.left = btnMaxLeft+'px';
       },
 
       changePrice: _.debounce(function(val) {
-
-        if (val == "min") {
+        if (val === "min") {
           if (parseInt(this.rangePrice[0]) > parseInt(this.rangePrice[1])) {
             this.rangeMin = this.rangeMax;
+            this.rangePrice[0] = this.rangePrice[1];
           }
         }
         if (val == "max") {
           if (parseInt(this.rangePrice[1]) < parseInt(this.rangePrice[0])) {
             this.rangeMax = this.rangeMin;
+            this.rangePrice[1] = this.rangePrice[0];
           }
         }
 
@@ -330,6 +299,8 @@
         this.rangeMax = maxIndex;
 
         this.emitPrice();
+        this.initRange(this.rangeMin, this.rangeMax);
+
       }, 700),
 
       priceRange() {
@@ -344,7 +315,7 @@
     },
     watch: {
       rangeSlider: function() {
-        this.priceRange();
+        //this.priceRange();
       },
       rangeMin: function (val) {
         this.priceRange();
@@ -407,62 +378,6 @@
         }
         &.max {
           left: calc(100% - 20px);
-        }
-      }
-    }
-    &--range {
-      position: relative;
-      width: 100%;
-      input[type="range"] {
-        width: 100%;
-        outline-style: none;
-        position: absolute;
-        left: 0;
-        right: 0;
-        margin: 0;
-        padding: 0;
-        outline-style: none;
-        -webkit-appearance: none;
-        background-color: rgba(255, 255, 255, 0);
-        &:nth-child(1)::-webkit-slider-thumb {
-          z-index: 2;
-        }
-        &::-webkit-slider-runnable-track {
-          height: 4px;
-          -webkit-appearance: none;
-          color: #13bba4;
-          margin-top: -1px;
-        }
-        &::-webkit-slider-thumb {
-          width: 20px;
-          -webkit-appearance: none;
-          height: 20px;
-          background: #fff;
-          border: 2px solid #f51449;
-          position: relative;
-          z-index: 1;
-          margin: -7px 0 0 0;
-          border-radius: 30px;
-          @media all and (max-width: 768px) {
-            width: 30px;
-            height: 30px;
-            margin-top: -12px;
-          }
-        }
-        &::-webkit-slider-thumb {
-          background: #fff;
-        }
-        &::-moz-range-progress {
-          background-color: rgba(255, 255, 255, 0);
-        }
-        &::-moz-range-track {
-          background-color: rgba(255, 255, 255, 0);
-        }
-        &::-ms-fill-lower {
-          background-color: rgba(255, 255, 255, 0);
-        }
-        &::-ms-fill-upper {
-          background-color: rgba(255, 255, 255, 0);
         }
       }
     }
