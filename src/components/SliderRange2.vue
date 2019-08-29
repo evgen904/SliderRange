@@ -2,13 +2,20 @@
   <div class="slider-range">
     <div class="slider-range--svg">
       <FlowChart
-        :range="[rangeSlider[0] - 1, rangeSlider[1]]"
+        :range="[rangeMin - 1, rangeMax]"
         :data="flowPrice"
       />
     </div>
-    <div class="slider-range--line">
+    <div class="slider-range--btn" ref="sliderRange">
       <div class="line" ref="selectedSegment"></div>
+      <button class="min" ref="btnMin"></button>
+      <button class="max" ref="btnMax"></button>
     </div>
+
+
+    <br><br><br><br>
+
+
     <div class="slider-range--range">
       <input
         class="min"
@@ -27,6 +34,14 @@
         :max="maxRange"
       />
     </div>
+
+
+    <br><br><br><br><br><br><br><br>
+
+
+
+
+
     <div class="slider-range--text">
       <template v-if="viewPort != 'mobile'">
         <span
@@ -122,6 +137,134 @@
       // }
     },
     mounted() {
+
+      let thisEl = this;
+      let sliderWr = this.$refs.sliderRange;
+      let btnMin = this.$refs.btnMin;
+      let btnMax = this.$refs.btnMax;
+      let btnDragMin = false;
+      let btnDragMax = false;
+
+      function getCoords(elem) {
+        var box = elem.getBoundingClientRect();
+        return {
+          top: box.top + pageYOffset,
+          left: box.left + pageXOffset
+        };
+      }
+
+      // нажатие на кнопку слайдера
+      function downRange(event, btn, slider, type) {
+        var buttonCoords = getCoords(btn);
+        var shiftX = event.pageX - buttonCoords.left;
+        var sliderCoords = getCoords(slider);
+        var stepSliderWidth = Math.floor(slider.offsetWidth / thisEl.maxRange);
+        if (type=="min") {
+          btnDragMin = true;
+        }
+        if (type=="max") {
+          btnDragMax = true;
+        }
+        return {
+          sliderCoords,
+          stepSliderWidth,
+          shiftX
+        }
+      };
+
+      // движение кнопки слайдера для минимального значения
+      function moveRange(event, btn, slider, sliderCoords, stepSliderWidth, shiftX) {
+        if (btnDragMin) {
+          var left = event.pageX - shiftX - sliderCoords.left;
+          left = Math.round(left / stepSliderWidth) * stepSliderWidth;
+          if (left < 0) {
+            left = 0;
+          }
+          var right = slider.offsetWidth - btn.offsetWidth;
+          if (left > right) {
+            left = right;
+          }
+          thisEl.rangeMin = thisEl.maxRange - Math.floor((slider.offsetWidth - left) / stepSliderWidth);
+          if (thisEl.rangeMin >= thisEl.rangeMax) {
+            thisEl.rangeMin = thisEl.rangeMax - 1;
+          } else {
+            btn.style.left = left + 'px';
+            //textMin.value = price[thisEl.rangeMin];
+          }
+        }
+      };
+
+      // движение кнопки слайдера для максимального значения
+      function moveRange2(event, btn, slider, sliderCoords, stepSliderWidth, shiftX) {
+        if (btnDragMax) {
+          var left = event.pageX - shiftX - sliderCoords.left;
+          left = Math.round(left / stepSliderWidth) * stepSliderWidth;
+          if (left < 0) {
+            left = 0;
+          }
+          var right = slider.offsetWidth - btn.offsetWidth;
+          if (left > right) {
+            left = right;
+          }
+          thisEl.rangeMax = thisEl.maxRange - Math.floor((slider.offsetWidth - left) / stepSliderWidth);
+          if (thisEl.rangeMax <= thisEl.rangeMin) {
+            thisEl.rangeMax = thisEl.rangeMin + 1;
+          } else {
+            btnMax.style.left = left + 'px';
+            //textMax.value = (price[thisEl.rangeMax] !== undefined) ? price[thisEl.rangeMax] : '';
+          }
+        }
+      };
+
+      // обращение к кнопки слайдера (min) - desktop
+      btnMin.addEventListener("mousedown",function(evt){
+        var down = downRange(evt, btnMin, sliderWr, 'min');
+        document.addEventListener("mousemove",function(evt){
+          moveRange(evt, btnMin, sliderWr, down.sliderCoords, down.stepSliderWidth, down.shiftX, 'min');
+        });
+        document.addEventListener("mouseup",function(evt){
+          btnDragMin = false;
+        });
+      });
+
+      // обращение к кнопки слайдера (max) - desktop
+      btnMax.addEventListener("mousedown",function(evt){
+        var down = downRange(evt, btnMax, sliderWr, 'max');
+        document.addEventListener("mousemove",function(evt){
+          moveRange2(evt, btnMax, sliderWr, down.sliderCoords, down.stepSliderWidth, down.shiftX, 'max');
+        });
+        document.addEventListener("mouseup",function(evt){
+          btnDragMax = false;
+        });
+      });
+
+      // обращение к кнопки слайдера (min) - mobile
+      btnMin.addEventListener("touchstart",function(evt){
+        var down = downRange(evt, btnMin, sliderWr, 'min');
+        document.addEventListener("touchmove",function(evt){
+          moveRange(evt, btnMin, sliderWr, down.sliderCoords, down.stepSliderWidth, down.shiftX, 'min');
+        });
+        document.addEventListener("touchend",function(evt){
+          btnDragMin = false;
+        });
+      });
+
+      // обращение к кнопки слайдера (max) - mobile
+      btnMax.addEventListener("touchstart",function(evt){
+        var down = downRange(evt, btnMax, sliderWr, 'max');
+        document.addEventListener("touchmove",function(evt){
+          moveRange2(evt, btnMax, sliderWr, down.sliderCoords, down.stepSliderWidth, down.shiftX, 'max');
+        });
+        document.addEventListener("touchend",function(evt){
+          btnDragMax = false;
+        });
+      });
+
+
+
+
+
+
       this.priceRange();
     },
     methods: {
@@ -162,14 +305,15 @@
       },
 
       changePrice: _.debounce(function(val) {
+
         if (val == "min") {
           if (parseInt(this.rangePrice[0]) > parseInt(this.rangePrice[1])) {
-            this.rangePrice[0] = this.rangePrice[1];
+            this.rangeMin = this.rangeMax;
           }
         }
         if (val == "max") {
           if (parseInt(this.rangePrice[1]) < parseInt(this.rangePrice[0])) {
-            this.rangePrice[1] = this.rangePrice[0];
+            this.rangeMax = this.rangeMin;
           }
         }
 
@@ -182,13 +326,15 @@
             ? this.price.findIndex(item => item == maxRange)
             : 15;
 
-        this.rangeSlider = [minIndex, maxIndex];
+        this.rangeMin = minIndex;
+        this.rangeMax = maxIndex;
+
         this.emitPrice();
       }, 700),
 
       priceRange() {
-        let procentMin = (this.rangeSlider[0] / this.maxRange) * 100;
-        let procentMax = (this.rangeSlider[1] / this.maxRange) * 100;
+        let procentMin = (this.rangeMin / this.maxRange) * 100;
+        let procentMax = (this.rangeMax / this.maxRange) * 100;
 
         this.$refs.selectedSegment.style.background = `linear-gradient(to right,
         #d8d8d8 ${procentMin}%,
@@ -199,13 +345,21 @@
     watch: {
       rangeSlider: function() {
         this.priceRange();
-      }
+      },
+      rangeMin: function (val) {
+        this.priceRange();
+      },
+      rangeMax: function (val) {
+        this.priceRange();
+      },
     },
     data() {
       return {
         maxRange: 15,
         rangeSlider: [0, 15],
         rangePrice: [null, null],
+        rangeMin: 0,
+        rangeMax: 15,
         viewPort: 'mobile'
       };
     }
@@ -220,17 +374,40 @@
     }
     &--svg {
       padding: 0 6px;
-      margin: 0 0 -7px 1px;
+      margin: 0 0 -4px 1px;
     }
-    &--line {
+    &--btn {
+      height: 2px;
+      background: #f51449;
       position: relative;
+      width: 100%;
       .line {
         height: 2px;
         position: absolute;
-        top: 1px;
+        top: 0;
         left: 0;
         width: 100%;
         background: #f51449;
+      }
+      button {
+        cursor: pointer;
+        width: 20px;
+        height: 20px;
+        border-radius: 30px;
+        position: absolute;
+        top: -10px;
+        left: 0;
+        background: #fff;
+        border: 2px solid #f51449;
+        outline-style: none;
+        padding: 0;
+        margin: 0;
+        &.min {
+          left: 0;
+        }
+        &.max {
+          left: calc(100% - 20px);
+        }
       }
     }
     &--range {
