@@ -86,7 +86,7 @@
   import _ from "lodash";
 
   export default {
-    name: "SliderRange",
+    name: "SliderRange1",
     components: {
       FlowChart
     },
