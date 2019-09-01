@@ -93,6 +93,7 @@ export default {
     this.stepSliderWidth = this.$refs.sliderRange.offsetWidth / this.rangeMaxVal;
     this.offsetRightSlider = this.$refs.sliderRange.offsetWidth - this.$refs.btnMin.offsetWidth;
     this.leftCoordsSlider = this.$refs.sliderRange.getBoundingClientRect().left + pageXOffset;
+    this.positionRange(this.rangeMin, this.rangeMaxVal);
   },
   methods: {
     //
@@ -291,12 +292,7 @@ export default {
         outline-style: none;
         padding: 0;
         margin: 0;
-        &.min {
-          left: 0;
-        }
-        &.max {
-          left: calc(100% - 20px);
-        }
+        left: 0;
       }
       &_mobile2 {
         button {
