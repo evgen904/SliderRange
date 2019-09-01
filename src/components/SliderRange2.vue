@@ -6,41 +6,71 @@
         :data="flowPrice"
       />
     </div>
-    <div class="slider-range--btn" ref="sliderRange">
+    <div class="slider-range--btn" :class="'slider-range--btn_'+viewPort" ref="sliderRange">
       <div class="line" ref="selectedSegment"></div>
-      <button class="min" ref="btnMin"></button>
-      <button class="max" ref="btnMax"></button>
+      <button
+        class="min"
+        @mousedown="downBtn($event, 'min')"
+        @mouseup="upBtn('min')"
+        @touchstart="downBtn($event, 'min')"
+        @touchend="upBtn('min')"
+        ref="btnMin"
+      ></button>
+      <button
+        class="max"
+        @mousedown="downBtn($event, 'max')"
+        @mouseup="upBtn('max')"
+        @touchstart="downBtn($event, 'max')"
+        @touchend="upBtn('max')"
+        ref="btnMax"
+      ></button>
     </div>
-    <div class="slider-range--text">
+    <div class="slider-range--text" :class="'slider-range--text_'+viewPort">
       <template v-if="viewPort != 'mobile'">
+        <template
+          v-if="
+          (rangePriceMin === undefined && rangePriceMax === undefined) ||
+          (rangePriceMin === null && rangePriceMax === null) ||
+          (rangePriceMin == 0 && (rangePriceMax === undefined || rangePriceMax === null))
+          "
+        >
+          <span >
+            любая цена
+          </span>
+        </template>
+        <template v-else>
+          <span v-if="rangePriceMin !== undefined && rangePriceMin !== null && rangePriceMin !== 0">
+            oт {{ rangePriceMin }} ₽
+          </span>
+          <span v-if="rangePriceMax !== undefined && rangePriceMax !== null">
+          до {{ rangePriceMax }} ₽
+          </span>
+        </template>
+      </template>
+      <template v-else>
         <span>
-          любая цена
+          oт
+          <input
+            type="text"
+            v-model.number="rangePriceMin"
+            @input="changePrice('min')"
+            @keypress="isNumber($event)"
+            placeholder="0"
+          />
+          ₽
+        </span>
+          <span>
+          до
+          <input
+            type="text"
+            v-model.number="rangePriceMax"
+            @input="changePrice('max')"
+            @keypress="isNumber($event)"
+            :placeholder="price[price.length-1] + ' +'"
+          />
+          ₽
         </span>
       </template>
-      <span>
-        oт
-        <input
-          type="text"
-          v-model.number="rangePrice[0]"
-          :disabled="viewPort != 'mobile'"
-          @input="changePrice('min')"
-          @keypress="isNumber($event)"
-          placeholder="0"
-        />
-        ₽
-      </span>
-      <span>
-        до
-        <input
-          type="text"
-          v-model.number="rangePrice[1]"
-          :disabled="viewPort != 'mobile'"
-          @input="changePrice('max')"
-          @keypress="isNumber($event)"
-          :placeholder="price[price.length-1] + ' +'"
-        />
-        ₽
-      </span>
     </div>
   </div>
 </template>
@@ -61,28 +91,54 @@ export default {
       type: Array
     }
   },
-  mounted() {
-    this.$refs.btnMin.addEventListener("mousedown", this.downBtnMin);
-    this.$refs.btnMax.addEventListener("mousedown", this.downBtnMax);
-    this.$refs.btnMin.addEventListener("touchstart", this.downBtnMin);
-    this.$refs.btnMax.addEventListener("touchstart", this.downBtnMax);
-  },
   methods: {
 
 
+    downBtn(event, val) {
 
-    downBtnMin(event) {
-      this.btnDownMin = {
-        sliderCoords: this.$refs.sliderRange.getBoundingClientRect().left + pageXOffset,
-        stepSliderWidth: Math.floor(this.$refs.sliderRange.offsetWidth / this.rangeMaxVal),
-        shiftX: event.pageX - this.$refs.btnMin.getBoundingClientRect().left + pageXOffset
-      };
+      if (val == "min") {
+        this.btnDownMin = {
+          sliderCoords: this.$refs.sliderRange.getBoundingClientRect().left + pageXOffset,
+          stepSliderWidth: this.$refs.sliderRange.offsetWidth / this.rangeMaxVal,
+          shiftX: event.pageX - this.$refs.btnMin.getBoundingClientRect().left + pageXOffset
+        };
+        document.addEventListener("mouseup", this.upBtn);
+        document.addEventListener("mousemove", this.moveBtnMin);
+        document.addEventListener("touchend", this.upBtn);
+        document.addEventListener("touchmove", this.moveBtnMin);
+      }
+      if (val == "max") {
+        this.btnDownMax = {
+          sliderCoords: this.$refs.sliderRange.getBoundingClientRect().left + pageXOffset,
+          stepSliderWidth: this.$refs.sliderRange.offsetWidth / this.rangeMaxVal,
+          shiftX: event.pageX - this.$refs.btnMax.getBoundingClientRect().left + pageXOffset
+        };
+        document.addEventListener("mouseup", this.upBtn);
+        document.addEventListener("mousemove", this.moveBtnMax);
+        document.addEventListener("touchend", this.upBtn);
+        document.addEventListener("touchmove", this.moveBtnMax);
+      }
 
-      document.addEventListener("mouseup", this.upBtnMin);
-      document.addEventListener("mousemove", this.moveBtnMin);
-      document.addEventListener("touchend", this.upBtnMin);
-      document.addEventListener("touchmove", this.moveBtnMin);
     },
+
+    upBtn(val) {
+
+      document.removeEventListener("mousemove",  this.moveBtnMin);
+      document.removeEventListener("touchmove",  this.moveBtnMin);
+      document.removeEventListener("mousemove",  this.moveBtnMax);
+      document.removeEventListener("touchmove",  this.moveBtnMax);
+
+      this.emitPrice();
+
+      console.log(val);
+
+
+    },
+
+
+
+
+
     moveBtnMin(event) {
       // позиция слева
       var left = event.pageX - this.btnDownMin.shiftX - this.$refs.sliderRange.getBoundingClientRect().left + pageXOffset;
@@ -96,32 +152,16 @@ export default {
       }
 
       this.rangeMin = this.rangeMaxVal - Math.floor((this.$refs.sliderRange.offsetWidth - left) / this.btnDownMin.stepSliderWidth);
-
       if (this.rangeMin >= this.rangeMax) {
         this.rangeMin = this.rangeMax - 1;
       } else {
         this.$refs.btnMin.style.left = left + 'px';
+        this.rangePriceMin = this.price[this.rangeMin];
       }
-    },
-    upBtnMin() {
-      document.removeEventListener("mousemove",  this.moveBtnMin);
-      document.removeEventListener("touchmove",  this.moveBtnMin);
+
     },
 
 
-
-    downBtnMax(event) {
-      this.btnDownMax = {
-        sliderCoords: this.$refs.sliderRange.getBoundingClientRect().left + pageXOffset,
-        stepSliderWidth: Math.floor(this.$refs.sliderRange.offsetWidth / this.rangeMaxVal),
-        shiftX: event.pageX - this.$refs.btnMax.getBoundingClientRect().left + pageXOffset
-      };
-
-      document.addEventListener("mouseup", this.upBtnMax);
-      document.addEventListener("mousemove", this.moveBtnMax);
-      document.addEventListener("touchend", this.upBtnMax);
-      document.addEventListener("touchmove", this.moveBtnMax);
-    },
     moveBtnMax(event) {
       // позиция слева
       var left = event.pageX - this.btnDownMax.shiftX - this.$refs.sliderRange.getBoundingClientRect().left + pageXOffset;
@@ -135,25 +175,86 @@ export default {
       }
 
       this.rangeMax = this.rangeMaxVal - Math.floor((this.$refs.sliderRange.offsetWidth - left) / this.btnDownMax.stepSliderWidth);
-
       if (this.rangeMax <= this.rangeMin) {
         this.rangeMax = this.rangeMin + 1;
       } else {
         this.$refs.btnMax.style.left = left + 'px';
+        this.rangePriceMax = this.price[this.rangeMax];
+      }
+    },
+
+    changePrice: _.debounce(function(val) {
+      if (val === "min") {
+        if (this.rangePriceMin > this.rangePriceMax && this.rangePriceMax !== null) {
+          this.rangeMin = this.rangeMax;
+          this.rangePriceMin = this.rangePriceMax;
+        }
+      }
+      if (val == "max") {
+        if (this.rangePriceMax < this.rangePriceMin && this.rangePriceMin !== null) {
+          this.rangeMax = this.rangeMin;
+          this.rangePriceMax = this.rangePriceMin;
+        }
       }
 
+      if (this.rangePriceMin !== null) {
+        let minRange = this.nearPrice(this.price, this.rangePriceMin);
+        let minIndex = this.price.findIndex(item => item == minRange);
+        this.rangeMin = minIndex;
+      }
+
+      if (this.rangePriceMax !== null && this.rangePriceMax !== undefined) {
+        let maxRange = this.nearPrice(this.price, this.rangePriceMax);
+        let maxIndex = this.price.findIndex(item => item == maxRange);
+        this.rangeMax = maxIndex;
+      }
+      this.positionRange(this.rangeMin, this.rangeMax);
+      this.emitPrice();
+    }, 700),
+
+    priceRange() {
+      this.rangePrice = [
+        this.price[this.rangeMin],
+        this.price[this.rangeMax]
+      ];
     },
-    upBtnMax() {
-      document.removeEventListener("mousemove",  this.moveBtnMax);
-      document.removeEventListener("touchmove",  this.moveBtnMax);
+
+    lineRange() {
+      let procentMin = (this.rangeMin / this.rangeMaxVal) * 100;
+      let procentMax = (this.rangeMax / this.rangeMaxVal) * 100;
+
+      this.$refs.selectedSegment.style.background = `linear-gradient(to right,
+        #d8d8d8 ${procentMin}%,
+        #f51449 ${procentMin}%, #f51449 ${procentMax}%,
+        #d8d8d8 ${procentMax}%)`;
     },
 
 
+    positionRange(min, max) {
+      let minRange = (min < max) ? min : max;
+      let maxRange = (max==this.rangeMaxVal) ? max-1 : (max < min) ? min : max;
+
+      let stepSliderWidth = this.$refs.sliderRange.offsetWidth / this.rangeMaxVal;
+      let btnMinLeft = stepSliderWidth*minRange;
+      this.$refs.btnMin.style.left = btnMinLeft+'px';
+
+      let btnMaxLeft = stepSliderWidth*maxRange;
+      this.$refs.btnMax.style.left = btnMaxLeft+'px';
+    },
 
 
+    nearPrice(arrayRange, elem) {
+      return arrayRange.reduce(function(prev, curr) {
+        return Math.abs(curr - elem) < Math.abs(prev - elem) ? curr : prev;
+      });
+    },
 
-
-
+    emitPrice() {
+      this.$emit("input", [
+        this.rangePriceMin,
+        this.rangePriceMax !== undefined && this.rangePriceMax !== null ? this.rangePriceMax : ""
+      ]);
+    },
 
 
     // ввод только цифр
@@ -172,10 +273,19 @@ export default {
     },
 
   },
+  watch: {
+    rangeMin: function (val) {
+      this.lineRange();
+    },
+    rangeMax: function (val) {
+      this.lineRange();
+    }
+  },
   data() {
     return {
-      rangeMaxVal: 15,
-      rangePrice: [null, null],
+      rangeMaxVal: 16,
+      rangePriceMin: null,
+      rangePriceMax: null,
       rangeMin: 0,
       rangeMax: 15,
       viewPort: 'mobile',
@@ -229,6 +339,16 @@ export default {
           left: calc(100% - 20px);
         }
       }
+      &_mobile2 {
+        button {
+          width: 30px;
+          height: 30px;
+          top: -15px;
+          &.max {
+            left: calc(100% - 30px);
+          }
+        }
+      }
     }
     &--text {
       display: flex;
@@ -237,21 +357,13 @@ export default {
       input[type="text"],
       input[type="number"] {
         outline-style: none;
-        padding: 0;
-        margin: 0 4px;
+        padding: 4px 8px;
+        margin: 0 6px;
         background: none;
-        border: none;
+        border-radius: 3px;
+        border: 1px solid #ccc;
         font-size: 14px;
-        width: 42px;
-        text-align: center;
-        @media all and (max-width: 768px) {
-          border: 1px solid #ccc;
-          border-radius: 3px;
-          width: 74px;
-          text-align: left;
-          padding: 4px 8px;
-          margin: 0 6px;
-        }
+        width: 74px;
       }
       input[type="number"] {
         &::-webkit-outer-spin-button,
@@ -262,11 +374,9 @@ export default {
       span {
         display: flex;
         margin-right: 6px;
-        @media all and (max-width: 768px) {
-          align-items: center;
-        }
+        align-items: center;
       }
-      @media all and (max-width: 768px) {
+      &_mobile {
         align-items: center;
         justify-content: space-between;
         padding-top: 28px;

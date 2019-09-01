@@ -24,12 +24,9 @@
           <rect
             :key="index"
             class="bar"
-            v-bind:class="
-              range[0] >= index || index >= range[1] ? 'disabled' : ''
-            "
             :x="stepPos(index, values.length)"
             y="0"
-            :height="value"
+            :height="range[0] >= index || index >= range[1] ? 0 : value"
             :width="stepWidth(index, values.length)"
           ></rect>
         </template>
@@ -100,9 +97,6 @@
     transition: fill 0.3s, stroke 0.3s;
     rect {
       transition: height 0.5s;
-    }
-    rect.disabled {
-      height: 0;
     }
     &.start {
       .bar {
