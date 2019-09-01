@@ -1,5 +1,7 @@
 <template>
-  <div class="slider-range">
+  <div
+    class="slider-range"
+  >
     <div class="slider-range--svg">
       <FlowChart
         :range="[rangeMin - 1, rangeMax]"
@@ -11,17 +13,13 @@
       <button
         class="min"
         @mousedown="downBtn($event, 'min')"
-        @mouseup="upBtn('min')"
         @touchstart="downBtn($event, 'min')"
-        @touchend="upBtn('min')"
         ref="btnMin"
       ></button>
       <button
         class="max"
         @mousedown="downBtn($event, 'max')"
-        @mouseup="upBtn('max')"
         @touchstart="downBtn($event, 'max')"
-        @touchend="upBtn('max')"
         ref="btnMax"
       ></button>
     </div>
@@ -91,98 +89,63 @@ export default {
       type: Array
     }
   },
+  mounted() {
+    this.stepSliderWidth = this.$refs.sliderRange.offsetWidth / this.rangeMaxVal;
+    this.offsetRightSlider = this.$refs.sliderRange.offsetWidth - this.$refs.btnMin.offsetWidth;
+    this.leftCoordsSlider = this.$refs.sliderRange.getBoundingClientRect().left + pageXOffset;
+  },
   methods: {
-
-
+    //
     downBtn(event, val) {
-
+      this.btnClick = val;
       if (val == "min") {
-        this.btnDownMin = {
-          sliderCoords: this.$refs.sliderRange.getBoundingClientRect().left + pageXOffset,
-          stepSliderWidth: this.$refs.sliderRange.offsetWidth / this.rangeMaxVal,
-          shiftX: event.pageX - this.$refs.btnMin.getBoundingClientRect().left + pageXOffset
-        };
-        document.addEventListener("mouseup", this.upBtn);
-        document.addEventListener("mousemove", this.moveBtnMin);
-        document.addEventListener("touchend", this.upBtn);
-        document.addEventListener("touchmove", this.moveBtnMin);
+        this.minShiftX = event.pageX - this.$refs.btnMin.getBoundingClientRect().left + pageXOffset;
       }
       if (val == "max") {
-        this.btnDownMax = {
-          sliderCoords: this.$refs.sliderRange.getBoundingClientRect().left + pageXOffset,
-          stepSliderWidth: this.$refs.sliderRange.offsetWidth / this.rangeMaxVal,
-          shiftX: event.pageX - this.$refs.btnMax.getBoundingClientRect().left + pageXOffset
-        };
-        document.addEventListener("mouseup", this.upBtn);
-        document.addEventListener("mousemove", this.moveBtnMax);
-        document.addEventListener("touchend", this.upBtn);
-        document.addEventListener("touchmove", this.moveBtnMax);
+        this.maxShiftX = event.pageX - this.$refs.btnMax.getBoundingClientRect().left + pageXOffset;
       }
-
+      document.addEventListener("mousemove", this.moveBtn);
+      document.addEventListener("touchmove", this.moveBtn);
+      document.addEventListener("mouseup", this.upBtn);
+      document.addEventListener("touchend", this.upBtn);
     },
-
-    upBtn(val) {
-
-      document.removeEventListener("mousemove",  this.moveBtnMin);
-      document.removeEventListener("touchmove",  this.moveBtnMin);
-      document.removeEventListener("mousemove",  this.moveBtnMax);
-      document.removeEventListener("touchmove",  this.moveBtnMax);
-
+    upBtn() {
+      document.removeEventListener("mousemove", this.moveBtn);
+      document.removeEventListener("touchmove", this.moveBtn);
       this.emitPrice();
-
-      console.log(val);
-
-
     },
+    moveBtn(event) {
+      if (this.btnClick=="min") {
+        let leftMin = event.pageX - this.minShiftX - this.leftCoordsSlider;
+        leftMin = (leftMin < 0) ? 0 : Math.round(leftMin / this.stepSliderWidth) * this.stepSliderWidth;
+        if (leftMin > this.offsetRightSlider)
+          leftMin = this.offsetRightSlider;
 
-
-
-
-
-    moveBtnMin(event) {
-      // позиция слева
-      var left = event.pageX - this.btnDownMin.shiftX - this.$refs.sliderRange.getBoundingClientRect().left + pageXOffset;
-      left = Math.round(left / this.btnDownMin.stepSliderWidth) * this.btnDownMin.stepSliderWidth;
-      if (left < 0) {
-        left = 0;
+        this.rangeMin = this.rangeMaxVal - Math.floor((this.$refs.sliderRange.offsetWidth - leftMin) / this.stepSliderWidth);
+        if (this.rangeMin >= this.rangeMax) {
+          this.rangeMin = this.rangeMax - 1;
+        } else {
+          this.$refs.btnMin.style.left = leftMin + 'px';
+          this.rangePriceMin = this.price[this.rangeMin];
+        }
       }
-      var right = this.$refs.sliderRange.offsetWidth - this.$refs.btnMin.offsetWidth;
-      if (left > right) {
-        left = right;
-      }
+      if (this.btnClick=="max") {
+        let leftMax = event.pageX - this.maxShiftX - this.leftCoordsSlider;
+        leftMax = (leftMax < 0) ? 0 : Math.round(leftMax / this.stepSliderWidth) * this.stepSliderWidth;
+        if (leftMax > this.offsetRightSlider)
+          leftMax = this.offsetRightSlider;
 
-      this.rangeMin = this.rangeMaxVal - Math.floor((this.$refs.sliderRange.offsetWidth - left) / this.btnDownMin.stepSliderWidth);
-      if (this.rangeMin >= this.rangeMax) {
-        this.rangeMin = this.rangeMax - 1;
-      } else {
-        this.$refs.btnMin.style.left = left + 'px';
-        this.rangePriceMin = this.price[this.rangeMin];
-      }
-
-    },
-
-
-    moveBtnMax(event) {
-      // позиция слева
-      var left = event.pageX - this.btnDownMax.shiftX - this.$refs.sliderRange.getBoundingClientRect().left + pageXOffset;
-      left = Math.round(left / this.btnDownMax.stepSliderWidth) * this.btnDownMax.stepSliderWidth;
-      if (left < 0) {
-        left = 0;
-      }
-      var right = this.$refs.sliderRange.offsetWidth - this.$refs.btnMax.offsetWidth;
-      if (left > right) {
-        left = right;
-      }
-
-      this.rangeMax = this.rangeMaxVal - Math.floor((this.$refs.sliderRange.offsetWidth - left) / this.btnDownMax.stepSliderWidth);
-      if (this.rangeMax <= this.rangeMin) {
-        this.rangeMax = this.rangeMin + 1;
-      } else {
-        this.$refs.btnMax.style.left = left + 'px';
-        this.rangePriceMax = this.price[this.rangeMax];
+        this.rangeMax = this.rangeMaxVal - Math.floor((this.$refs.sliderRange.offsetWidth - leftMax) / this.stepSliderWidth);
+        if (this.rangeMax <= this.rangeMin) {
+          this.rangeMax = this.rangeMin + 1;
+        } else {
+          this.$refs.btnMax.style.left = leftMax + 'px';
+          this.rangePriceMax = this.price[this.rangeMax];
+        }
       }
     },
 
+    //
     changePrice: _.debounce(function(val) {
       if (val === "min") {
         if (this.rangePriceMin > this.rangePriceMax && this.rangePriceMax !== null) {
@@ -212,12 +175,6 @@ export default {
       this.emitPrice();
     }, 700),
 
-    priceRange() {
-      this.rangePrice = [
-        this.price[this.rangeMin],
-        this.price[this.rangeMax]
-      ];
-    },
 
     lineRange() {
       let procentMin = (this.rangeMin / this.rangeMaxVal) * 100;
@@ -229,33 +186,32 @@ export default {
         #d8d8d8 ${procentMax}%)`;
     },
 
-
+    // (min, max) ставим в нужное положение в зависимости от цены
     positionRange(min, max) {
       let minRange = (min < max) ? min : max;
       let maxRange = (max==this.rangeMaxVal) ? max-1 : (max < min) ? min : max;
 
-      let stepSliderWidth = this.$refs.sliderRange.offsetWidth / this.rangeMaxVal;
-      let btnMinLeft = stepSliderWidth*minRange;
+      let btnMinLeft = this.stepSliderWidth*minRange;
       this.$refs.btnMin.style.left = btnMinLeft+'px';
 
-      let btnMaxLeft = stepSliderWidth*maxRange;
+      let btnMaxLeft = this.stepSliderWidth*maxRange;
       this.$refs.btnMax.style.left = btnMaxLeft+'px';
     },
 
-
+    // ближайшее число из массива
     nearPrice(arrayRange, elem) {
       return arrayRange.reduce(function(prev, curr) {
         return Math.abs(curr - elem) < Math.abs(prev - elem) ? curr : prev;
       });
     },
 
+    // отправка в filter.price
     emitPrice() {
       this.$emit("input", [
         this.rangePriceMin,
         this.rangePriceMax !== undefined && this.rangePriceMax !== null ? this.rangePriceMax : ""
       ]);
     },
-
 
     // ввод только цифр
     isNumber: function(evt) {
@@ -271,13 +227,12 @@ export default {
         return true;
       }
     },
-
   },
   watch: {
-    rangeMin: function (val) {
+    rangeMin() {
       this.lineRange();
     },
-    rangeMax: function (val) {
+    rangeMax() {
       this.lineRange();
     }
   },
@@ -289,8 +244,12 @@ export default {
       rangeMin: 0,
       rangeMax: 15,
       viewPort: 'mobile',
-      btnDownMin: null,
-      btnDownMax: null
+      minShiftX: null,
+      maxShiftX: null,
+      btnClick: '',
+      stepSliderWidth: null,
+      offsetRightSlider: null,
+      leftCoordsSlider: null
     };
   }
 };
